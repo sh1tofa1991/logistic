@@ -1,10 +1,12 @@
 services:
   - type: web
     name: vladtranslogist
-    env: static
+    env: node
     buildCommand: npm install && npm run build
-    staticPublishPath: dist
+    startCommand: node server.js
     envVars:
+      - key: NODE_VERSION
+        value: 20
       - key: VITE_ADMIN_EMAIL
         value: admin@vladtranslogist.ru
       - key: VITE_ADMIN_PASSWORD
