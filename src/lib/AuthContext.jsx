@@ -51,12 +51,12 @@ export const AuthProvider = ({ children }) => {
     setAuthChecked(true);
     
     if (shouldRedirect) {
-      window.location.href = '/';
+      window.location.href = '#/';
     }
   };
 
   const navigateToLogin = () => {
-    window.location.href = '/login';
+    window.location.href = '#/login';
   };
 
   const isAdmin = user?.isAdmin === true;
