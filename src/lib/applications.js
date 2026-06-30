@@ -1,11 +1,8 @@
-import { base44 } from '@/api/base44Client';
-
 const STORAGE_KEY = 'applications';
 
 function readLocal() {
   const data = localStorage.getItem(STORAGE_KEY);
   if (!data) {
-    // Initialize with sample data if empty
     const sampleData = [
       {
         id: '1',
@@ -63,18 +60,6 @@ function writeLocal(apps) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(apps));
 }
 
-function upsertLocal(record) {
-  const apps = readLocal();
-  const index = apps.findIndex((a) => a.id === record.id);
-  if (index >= 0) {
-    apps[index] = { ...apps[index], ...record };
-  } else {
-    apps.unshift(record);
-  }
-  writeLocal(apps);
-  return apps;
-}
-
 function createLocalRecord(data) {
   return {
     ...data,
@@ -85,44 +70,24 @@ function createLocalRecord(data) {
 }
 
 export async function listApplications() {
-  try {
-    const data = await base44.entities.Application.list('-created_date', 500);
-    writeLocal(data);
-    return data;
-  } catch (error) {
-    console.warn('Base44 unavailable, using local applications cache', error);
-    return readLocal();
-  }
+  return readLocal();
 }
 
 export async function createApplication(data) {
   const payload = { ...data, status: 'new' };
-
-  try {
-    const created = await base44.entities.Application.create(payload);
-    upsertLocal(created);
-    return created;
-  } catch (error) {
-    console.warn('Base44 create failed, saving locally', error);
-    const local = createLocalRecord(payload);
-    upsertLocal(local);
-    return local;
-  }
+  const record = createLocalRecord(payload);
+  const apps = readLocal();
+  apps.unshift(record);
+  writeLocal(apps);
+  return record;
 }
 
 export async function updateApplication(id, data) {
-  try {
-    const updated = await base44.entities.Application.update(id, data);
-    upsertLocal(updated);
-    return updated;
-  } catch (error) {
-    console.warn('Base44 update failed, updating local cache', error);
-    const apps = readLocal();
-    const index = apps.findIndex((a) => a.id === id);
-    if (index < 0) throw new Error('Заявка не найдена');
-    const updated = { ...apps[index], ...data };
-    apps[index] = updated;
-    writeLocal(apps);
-    return updated;
-  }
+  const apps = readLocal();
+  const index = apps.findIndex((a) => a.id === id);
+  if (index < 0) throw new Error('Заявка не найдена');
+  const updated = { ...apps[index], ...data };
+  apps[index] = updated;
+  writeLocal(apps);
+  return updated;
 }
